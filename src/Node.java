@@ -53,10 +53,20 @@ public class Node{
 	 */
 	public void calculateOutput()
 	{
-		
+		double incomingTotal = 0.0;//is summation of all the weights*inputs from parent to child
+		//only for hidden layer (type 2) and output layer node
 		if(type==2 || type==4)//Not an input or bias node
 		{
-			// TODO: add code here
+			//loop through all parents and total up the inputs
+			for (NodeWeightPair parent: parents) {
+				double parentInput = parent.node.getOutput();
+				double parentWeight = parent.weight;
+				incomingTotal += parentInput * parentWeight;
+			}
+			
+			//This RELU formula takes the following form: max(0, x), where x is the summation
+			//of products made up of the weight*input from one parent node to a child node. 
+			this.outputValue = Math.max(0, incomingTotal);
 		}
 	}
 
