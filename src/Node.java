@@ -59,9 +59,9 @@ public class Node{
 		{
 			//loop through all parents and total up the inputs
 			for (NodeWeightPair parent: parents) {
-				double parentInput = parent.node.getOutput();
+				double parentValue = parent.node.getOutput();
 				double parentWeight = parent.weight;
-				incomingTotal += parentInput * parentWeight;
+				incomingTotal += parentValue * parentWeight;
 			}
 			
 			//This RELU formula takes the following form: max(0, x), where x is the summation

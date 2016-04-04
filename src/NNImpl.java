@@ -149,9 +149,14 @@ public class NNImpl{
 				double errorVal = teacherVal - result;
 				
 				//backward pass
-				
-				//make array for values
-				
+				/*
+				for (int j = 0; j < outputNodes.size(); j++){
+					Node currOutNode = outputNodes.get(j);
+					for (int k = 0; k < currOutNode.parents.size(); k++){
+						
+					}
+				}
+				*/
 				//find the deltas between the output nodes and the hidden nodes
 				//for every output node
 				for (int j = 0; j < outputNodes.size(); j++){
@@ -159,15 +164,16 @@ public class NNImpl{
 					//for every parent of the given out node
 					for (int k = 0; k < currOutNode.parents.size(); k++){
 						NodeWeightPair hiddenNode = currOutNode.parents.get(k);
-						double gPrime = (result > 0) ? 1: 0;
-						double deltaWeightHtoO = this.learningRate * hiddenNode.node.getOutput()*errorVal*gPrime;
+						double gPrimeJK = (result > 0) ? 1: 0;
+						double deltaWeightHtoO = this.learningRate * hiddenNode.node.getOutput()*errorVal*gPrimeJK;
 						hiddenNode.weight += deltaWeightHtoO; //adjust given hidden node by delta
-						double summationTerm = (hiddenNode.weight * errorVal* gPrime)*outputNodes.size();//TODO verify that multiplying this gives the summation effect
+						double summationTerm = (hiddenNode.weight * errorVal* gPrimeJK);//TODO verify that multiplying this gives the summation effect
 						
 						//for every input node connected to the current hidden node
 						if (hiddenNode.node.parents != null){
 							for (int l = 0; l < hiddenNode.node.parents.size(); l++){
 								NodeWeightPair inputNode = hiddenNode.node.parents.get(l);
+								//double gPrimeIJ = (hiddenNode.weight);
 								inputNode.weight += this.learningRate*inputNode.node.getOutput() * hiddenNode.node.getOutput()*
 										(1- hiddenNode.node.getOutput()) * summationTerm;
 							}
