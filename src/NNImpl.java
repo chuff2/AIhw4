@@ -133,6 +133,65 @@ public class NNImpl{
 	
 	public void train()
 	{
-		// TODO: add code here
+		// TODO: add code here DIRECTLY FROM PPT slides
+		
+		//TODO: check assumption that we only randomize once as opposed to on every epoch
+		//like the book says
+		
+		//go through the number of specified epoch's
+		for (int i = 0; i < this.maxEpoch; i++){
+			
+			for (Instance inst: trainingSet){
+			
+				//forward pass
+				double result = calculateOutputForInstance(inst);//O value in powerpoint slide 43
+				double teacherVal = getTeacherValue(inst);//T value from pp
+				double errorVal = teacherVal - result;
+				
+				//backward pass
+				
+				//make array for values
+				
+				//find the deltas between the output nodes and the hidden nodes
+				//for every output node
+				for (int j = 0; j < outputNodes.size(); j++){
+					Node currOutNode = outputNodes.get(j);
+					//for every parent of the given out node
+					for (int k = 0; k < currOutNode.parents.size(); k++){
+						NodeWeightPair hiddenNode = currOutNode.parents.get(k);
+						double gPrime = (result > 0) ? 1: 0;
+						double deltaWeightHtoO = this.learningRate * hiddenNode.node.getOutput()*errorVal*gPrime;
+						hiddenNode.weight += deltaWeightHtoO; //adjust given hidden node by delta
+						double summationTerm = (hiddenNode.weight * errorVal* gPrime)*outputNodes.size();//TODO verify that multiplying this gives the summation effect
+						
+						//for every input node connected to the current hidden node
+						if (hiddenNode.node.parents != null){
+							for (int l = 0; l < hiddenNode.node.parents.size(); l++){
+								NodeWeightPair inputNode = hiddenNode.node.parents.get(l);
+								inputNode.weight += this.learningRate*inputNode.node.getOutput() * hiddenNode.node.getOutput()*
+										(1- hiddenNode.node.getOutput()) * summationTerm;
+							}
+						}
+					}
+				}
+				
+			}
+		}
+	}
+	
+	/**
+	 * loops through all the class values of an instance looking for the index where
+	 * the value is set to 1. i.e. if [1 0 0] is the contents of the list, then
+	 * we return 0 as the index
+	*/
+	private int getTeacherValue(Instance inst){
+		for (int i = 0; i < inst.classValues.size(); i++){
+			if (inst.classValues.get(i) == 1){
+				return i;
+			}
+		}
+		//error code. There must be a value that is == 1 i.e. there must be a class
+		//assigned to the given instance
+		return -1;
 	}
 }
