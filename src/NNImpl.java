@@ -87,6 +87,38 @@ public class NNImpl{
 	public int calculateOutputForInstance(Instance inst)
 	{
 		// TODO: add code here
+		//first we need to deliver the input values from the instance
+		//object and put them into the inputNodes array
+		for (int i = 0; i < inst.attributes.size(); i++){
+			//Note: setInput is only relevant for type 0 nodes aka input nodes
+			inputNodes.get(i).setInput(inst.attributes.get(i));
+		}
+		
+		//now go through hidden nodes and calculate their outputs and use
+		//those as inputs for the output node and finally calculate output 
+		//value at output node. In other words, we are going to get the RELU 
+		//value from a given hidden node and 
+		for (int i = 0; i < hiddenNodes.size(); i++){
+			//Note: remember that calculateOutput internally updates the output of the node. 
+			hiddenNodes.get(i).calculateOutput();
+		}
+		
+		
+		int returnIndex = 0;//default index... how should we handle if there are no output nodes?
+		double currMaxOutput = (double) Integer.MIN_VALUE;//start off at smallest possible number
+		
+		//go through the output nodes and calculate their outputs one at a time and then determine
+		//the index which houses the greatest output
+		for (int i = 0; i < outputNodes.size(); i++){
+			Node currOutputNode = outputNodes.get(i);
+			currOutputNode.calculateOutput();
+			if (currMaxOutput < currOutputNode.getOutput()){
+				returnIndex = i;
+				currMaxOutput = currOutputNode.getOutput();
+			}
+		}
+		
+		return returnIndex;
 	}
 	
 
