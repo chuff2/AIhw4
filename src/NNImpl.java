@@ -107,12 +107,14 @@ public class NNImpl{
 		int returnIndex = 0;//default index... how should we handle if there are no output nodes?
 		double currMaxOutput = (double) Integer.MIN_VALUE;//start off at smallest possible number
 		
+		//System.out.println("This guy: ");
 		//go through the output nodes and calculate their outputs one at a time and then determine
 		//the index which houses the greatest output
 		for (int i = 0; i < outputNodes.size(); i++){
 			Node currOutputNode = outputNodes.get(i);
 			currOutputNode.calculateOutput();
-			if (currMaxOutput < currOutputNode.getOutput()){
+			//System.out.println("\t" + i + " " + currOutputNode.getOutput());
+			if (currMaxOutput <= currOutputNode.getOutput()){
 				returnIndex = i;
 				currMaxOutput = currOutputNode.getOutput();
 			}
@@ -139,49 +141,85 @@ public class NNImpl{
 		//like the book says
 		
 		//go through the number of specified epoch's
-		for (int i = 0; i < this.maxEpoch; i++){
+		for (int e = 0; e < this.maxEpoch; e++){
 			
 			for (Instance inst: trainingSet){
 			
 				//forward pass
 				double result = calculateOutputForInstance(inst);//O value in powerpoint slide 43
-				double teacherVal = getTeacherValue(inst);//T value from pp
-				double errorVal = teacherVal - result;
-				
+				//double teacherVal = getTeacherValue(inst);//T value from pp
+				//double errorVal = teacherVal - result;
+
 				//backward pass
-				/*
-				for (int j = 0; j < outputNodes.size(); j++){
-					Node currOutNode = outputNodes.get(j);
-					for (int k = 0; k < currOutNode.parents.size(); k++){
-						
+				double hiddenSumTerm[] = new double[hiddenNodes.size()];
+				double deltasFromJK[][] = new double[hiddenNodes.size()][outputNodes.size()];
+				for (int k = 0; k < outputNodes.size(); k++){
+					Node currOutNode = outputNodes.get(k);
+					double errorVal = inst.classValues.get(k) - currOutNode.getOutput();
+					double gPrimeJK = ((currOutNode.getOutput()) > 0) ? 1.0: 0.0;
+					for (int j = 0; j < currOutNode.parents.size(); j++){
+						NodeWeightPair hiddenNode = currOutNode.parents.get(j);
+						//delta = alpha * a_j * error * g'(in_k)
+						double deltaWeightHtoO = this.learningRate * hiddenNode.node.getOutput()*errorVal*gPrimeJK;
+						//summation over k of w_j,k * error * g'(in_k)
+						if (k == 0) hiddenSumTerm[j] = 0;
+						hiddenSumTerm[j] += hiddenNode.weight * errorVal * gPrimeJK;
+						deltasFromJK[j][k] = deltaWeightHtoO;
 					}
 				}
-				*/
-				//find the deltas between the output nodes and the hidden nodes
-				//for every output node
+				
+				//forward pass
+				double deltasFromIJ[][] = new double[inputNodes.size()][hiddenNodes.size()];
+				for (int j = 0; j < (hiddenNodes.size() - 1); j++){
+					Node currHidNode = hiddenNodes.get(j);
+					double gPrimeJ = ((currHidNode.getOutput()) > 0) ? 1.0: 0.0;
+					for (int i = 0; i < currHidNode.parents.size(); i++){
+						NodeWeightPair inputNode = currHidNode.parents.get(i);
+						//delta = alpha * a_i * g'(in_j) * summation
+						double deltaWeightItoH = this.learningRate * inputNode.node.getOutput() * gPrimeJ * hiddenSumTerm[j];
+						deltasFromIJ[i][j] = deltaWeightItoH;
+					}
+					
+				}
+				
+				//apply deltas
 				for (int j = 0; j < outputNodes.size(); j++){
 					Node currOutNode = outputNodes.get(j);
-					//for every parent of the given out node
+					
 					for (int k = 0; k < currOutNode.parents.size(); k++){
 						NodeWeightPair hiddenNode = currOutNode.parents.get(k);
-						double gPrimeJK = (result > 0) ? 1: 0;
-						double deltaWeightHtoO = this.learningRate * hiddenNode.node.getOutput()*errorVal*gPrimeJK;
-						hiddenNode.weight += deltaWeightHtoO; //adjust given hidden node by delta
-						double summationTerm = (hiddenNode.weight * errorVal* gPrimeJK);//TODO verify that multiplying this gives the summation effect
-						
-						//for every input node connected to the current hidden node
-						if (hiddenNode.node.parents != null){
-							for (int l = 0; l < hiddenNode.node.parents.size(); l++){
-								NodeWeightPair inputNode = hiddenNode.node.parents.get(l);
-								//double gPrimeIJ = (hiddenNode.weight);
-								inputNode.weight += this.learningRate*inputNode.node.getOutput() * hiddenNode.node.getOutput()*
-										(1- hiddenNode.node.getOutput()) * summationTerm;
-							}
-						}
+						hiddenNode.weight += deltasFromJK[k][j];
 					}
 				}
-				
+				//apply other deltas
+				for (int j = 0; j < (hiddenNodes.size() - 1); j++){
+					Node currHidNode = hiddenNodes.get(j);
+					for (int i = 0; i < currHidNode.parents.size(); i++){
+						NodeWeightPair inputNode = currHidNode.parents.get(i);
+						inputNode.weight += deltasFromIJ[i][j];
+					}
+					
+				}
 			}
+			//code that divides the weights byt he size of the training set
+			/*
+			for (int j = 0; j < outputNodes.size(); j++){
+				Node currOutNode = outputNodes.get(j);
+				
+				for (int k = 0; k < currOutNode.parents.size(); k++){
+					NodeWeightPair hiddenNode = currOutNode.parents.get(k);
+					hiddenNode.weight = hiddenNode.weight/trainingSet.size();
+				}
+			}
+			//apply other deltas
+			for (int j = 0; j < (hiddenNodes.size() - 1); j++){
+				Node currHidNode = hiddenNodes.get(j);
+				for (int i = 0; i < currHidNode.parents.size(); i++){
+					NodeWeightPair inputNode = currHidNode.parents.get(i);
+					inputNode.weight = inputNode.weight/trainingSet.size();
+				}
+			}
+			*/
 		}
 	}
 	

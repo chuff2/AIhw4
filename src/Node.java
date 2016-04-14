@@ -61,12 +61,12 @@ public class Node{
 			for (NodeWeightPair parent: parents) {
 				double parentValue = parent.node.getOutput();
 				double parentWeight = parent.weight;
-				incomingTotal += parentValue * parentWeight;
+				incomingTotal += (parentValue * parentWeight);
 			}
 			
 			//This RELU formula takes the following form: max(0, x), where x is the summation
 			//of products made up of the weight*input from one parent node to a child node. 
-			this.outputValue = Math.max(0, incomingTotal);
+			this.outputValue = Math.max(0.0, incomingTotal);
 		}
 	}
 
